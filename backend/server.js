@@ -20,6 +20,7 @@ app.use(cors);
 
 //Requests
 app.post('/auth/register', auth.register);
+app.post('/auth/login', auth.login);
 app.get('/api/message', message.get);
 app.post('/api/message', checkAuthenticated, message.post);
 

@@ -2,48 +2,28 @@ var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
+var jwt = require('jwt-simple');
+var moment = require('moment');
 
-var database;
+mongoose.Promise = global.Promise;
 
-var Message = mongoose.model('Message', {
-  msg: String
-});
+//Controllers
+var auth = require('./controllers/auth');
+var message = require('./controllers/message');
+//services
+var checkAuthenticated = require('./services/checkAuthenticated');
+var cors = require('./services/cors');
 
+//Middeware
 app.use(bodyParser.json());
+app.use(cors);
 
-app.use(function(req,res,next){
-  res.header("Access-Control-Allow-Origin","*");
-  res.header("Access-Control-Allow-Headers","Content-Type, Authorization");
-  next();
-})
+//Requests
+app.post('/auth/register', auth.register);
+app.get('/api/message', message.get);
+app.post('/api/message', checkAuthenticated, message.post);
 
-app.get('/api/message', getMessages)
-
-app.post('/api/message', function(req,res){
-  console.log(req.body);
-
-  var message = new Message(req.body);
-  message.save(function(err){
-    if(err){
-      res.status(400);
-      res.setHeader('Content-Type', 'application/json');
-      res.send(JSON.stringify({ status : 'error' }));
-      console.log(err);
-    }
-    res.status(200);
-    res.setHeader('Content-Type', 'application/json');
-    res.send(JSON.stringify({ status : 'ok' }));
-  });
-
-});
-
-function getMessages(req,res){
-  Message.find({}).exec(function(err,result){
-    res.send(result)
-  });
-}
-
-
+//DB Connection
 mongoose.connect("mongodb://localhost:27017/meantest", function(err,db){
   if(!err){
     console.log("connected to mongo");

@@ -5,8 +5,6 @@ var mongoose = require('mongoose');
 var jwt = require('jwt-simple');
 var moment = require('moment');
 
-mongoose.Promise = global.Promise;
-
 //Controllers
 var auth = require('./controllers/auth');
 var message = require('./controllers/message');
@@ -25,6 +23,7 @@ app.get('/api/message', message.get);
 app.post('/api/message', checkAuthenticated, message.post);
 
 //DB Connection
+mongoose.Promise = global.Promise;
 mongoose.connect("mongodb://localhost:27017/meantest", function(err,db){
   if(!err){
     console.log("connected to mongo");

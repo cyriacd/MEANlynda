@@ -1,28 +1,36 @@
 var User = require('../models/User');
 var jwt = require('jwt-simple');
 var moment = require('moment');
+var bcrypt = require('bcrypt');
+
+const saltRounds = 8;
+
 module.exports = {
   register: function(req, res){
     User.findOne({email: req.body.email}, function(err, existingUser){
       if(existingUser){
         return res.status(401).send({message:"Email already in use."});
       }
-      var user = new User(req.body);
-      console.log(req.body);
-      user.save(function(err, result){
-        if(err){
-          res.status(500).send({
-            message: err.message
-          });
-        }else{
+      bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+        req.body.password_hash = hash;
+        delete req.body.password;
+        var user = new User(req.body);
+        console.log(req.body);
+        user.save(function(err, result){
+          if(err){
+            res.status(500).send({
+              message: err.message
+            });
+          }else{
 
-        }
-        res.status(200).send({
-          status: 'ok',
-          token: createToken(result)
-        });;
+          }
+          res.status(200).send({
+            status: 'ok',
+            token: createToken(result)
+          });;
+        });
+        console.log("DONE WITH THIS PART");
       });
-      console.log("DONE WITH THIS PART")
     })
   },
   login:function(req, res){
@@ -30,13 +38,15 @@ module.exports = {
       if(!user){
         return res.status(401).send({message:"Invalid email!"});
       }else{
-        if(req.body.password == user.password){
-          res.send({
-            token: createToken(user)
-          });
-        }else{
-          return res.status(401).send({message:"Wrong password"});
-        }
+        // bcrypt.compare(req.body.password, user.password_hash).then(function(res) {
+          if(bcrypt.compareSync(req.body.password, user.password_hash)){
+            res.status(200).send({
+              token: createToken(user)
+            });
+          }else{
+            return res.status(401).send({message:"Wrong password"});
+          }
+        // });
       }
     });
   }
